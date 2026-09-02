@@ -34,8 +34,9 @@ img[src="/hey-roll-logo.svg"] { content:url('/images/Logo%20Hamburgueria.png'); 
 .hero-splatter { opacity:.55; background-image: radial-gradient(circle at 4% 35%, transparent 0 48px, rgba(255,255,255,.11) 49px 50px, transparent 51px), radial-gradient(circle at 96% 45%, transparent 0 42px, rgba(255,255,255,.08) 43px 44px, transparent 45px); }
 .hero-title { text-shadow: 4px 5px 0 #080808; }
 .hero-title span { color:#e11920; }
-.hero-logo-frame { width:min(42vw,560px); aspect-ratio:1/1; border-radius:50%; padding:10px; background:#111; overflow:hidden; box-shadow:0 0 0 7px rgba(255,255,255,.06), 0 25px 70px rgba(0,0,0,.7); display:flex; align-items:center; justify-content:center; }
-.hero-logo-frame img { display:block; width:128%; height:128%; flex:none; border-radius:50%; opacity:1; object-fit:contain; object-position:center; }
+/* HERO logo: remove the artificial outer ring and enlarge the real uploaded artwork. */
+.hero-logo-frame { width:min(42vw,560px); aspect-ratio:1/1; border-radius:50%; padding:0; background:transparent; overflow:hidden; box-shadow:none; display:flex; align-items:center; justify-content:center; }
+.hero-logo-frame img { display:block; width:142%; height:142%; max-width:none; max-height:none; flex:none; border-radius:50%; opacity:1; object-fit:contain; object-position:center; }
 .info-card { display:flex; min-height:135px; align-items:center; gap:22px; border:1px solid rgba(255,255,255,.13); background:rgba(4,4,4,.88); padding:24px; }
 .info-card > svg { flex:0 0 auto; color:#d71920; }
 .info-card h3 { font-size:19px; font-weight:900; }
@@ -54,5 +55,5 @@ img[src="/hey-roll-logo.svg"] { content:url('/images/Logo%20Hamburgueria.png'); 
 .product-card { overflow:hidden; border:1px solid rgba(255,255,255,.1); background:#111; transition:.25s; }
 .product-card:hover { transform:translateY(-4px); border-color:rgba(215,25,32,.7); box-shadow:0 15px 40px rgba(0,0,0,.4); }
 .product-badge { position:absolute; left:12px; top:12px; background:#d71920; padding:6px 9px; font-size:10px; font-weight:900; text-transform:uppercase; }
-@media (max-width: 900px) { .hero-logo-frame { width:min(80vw, 520px); } .hero-rock .relative.mx-auto { grid-template-columns:1fr; } .hero-rock .relative.mx-auto > div:last-child { order:-1; } }
-@media (max-width: 640px) { .hero-logo-frame { width:88vw; max-width:420px; } .hero-title { font-size:64px; } .info-card { min-height:auto; padding:18px; } .info-card h3 { font-size:15px; } .info-card p, .info-card strong { font-size:14px; } .section-heading { align-items:flex-start; } .section-heading span { display:none; } }
+@media (max-width: 900px) { .hero-logo-frame { width:min(80vw, 520px); } .hero-logo-frame img { width:142%; height:142%; } .hero-rock .relative.mx-auto { grid-template-columns:1fr; } .hero-rock .relative.mx-auto > div:last-child { order:-1; } }
+@media (max-width: 640px) { .hero-logo-frame { width:88vw; max-width:420px; } .hero-logo-frame img { width:142%; height:142%; } .hero-title { font-size:64px; } .info-card { min-height:auto; padding:18px; } .info-card h3 { font-size:15px; } .info-card p, .info-card strong { font-size:14px; } .section-heading { align-items:flex-start; } .section-heading span { display:none; } }
