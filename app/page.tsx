@@ -5,7 +5,7 @@ import { ArrowRight, Clock3, MapPin, Minus, Plus, ShoppingCart, Star, Truck, X }
 import { createClient } from '@supabase/supabase-js';
 
 const supabase = createClient('https://zjeclsozvjymuzwyhvqj.supabase.co','sb_publishable_WyjaTHvDUwGPCwHaXcdApw_xlssm0TE');
-const LOGO='https://hey-roll-lets-go.vercel.app/images/hey-roll-logo.png';
+const LOGO='/images/hey-roll-logo.png';
 const WA='5585992443472';
 type Product={product_id:string;category_name:string|null;product_name:string;product_description:string|null;product_price:number;product_image_url:string|null;product_badge:string|null};
 type CartItem=Product&{quantity:number};
