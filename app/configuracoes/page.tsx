@@ -1,5 +1,38 @@
+'use client';
+
+import { useEffect, useState } from 'react';
+import { LogIn, LockKeyhole } from 'lucide-react';
 import AdminPanel from '@/components/admin-panel';
+import { supabase } from '@/lib/supabase';
 
 export default function ConfiguracoesPage() {
-  return <AdminPanel />;
+  const [checked, setChecked] = useState(false);
+  const [allowed, setAllowed] = useState(false);
+  const [email, setEmail] = useState('');
+  const [password, setPassword] = useState('');
+  const [error, setError] = useState('');
+  const [loading, setLoading] = useState(false);
+
+  async function verify() {
+    const { data: sessionData } = await supabase.auth.getSession();
+    if (!sessionData.session) { setAllowed(false); setChecked(true); return; }
+    const { data, error: adminError } = await supabase.from('admin_users').select('user_id').eq('user_id', sessionData.session.user.id).maybeSingle();
+    if (adminError || !data) { await supabase.auth.signOut(); setAllowed(false); } else setAllowed(true);
+    setChecked(true);
+  }
+
+  useEffect(() => { void verify(); }, []);
+
+  async function login(e: React.FormEvent) {
+    e.preventDefault(); setLoading(true); setError('');
+    const { error: authError } = await supabase.auth.signInWithPassword({ email: email.trim(), password });
+    if (authError) { setError('E-mail ou senha inválidos.'); setLoading(false); return; }
+    const { data, error: adminError } = await supabase.from('admin_users').select('user_id').eq('user_id', (await supabase.auth.getUser()).data.user?.id ?? '').maybeSingle();
+    if (adminError || !data) { await supabase.auth.signOut(); setError('Acesso negado. Somente o proprietário pode entrar.'); setLoading(false); return; }
+    setAllowed(true); setLoading(false);
+  }
+
+  if (!checked || (checked && allowed)) return checked ? <AdminPanel /> : <main className="min-h-screen bg-[#050505] p-8 text-white">Carregando...</main>;
+
+  return <main className="flex min-h-screen items-center justify-center bg-[#050505] px-5 text-white"><form onSubmit={login} className="w-full max-w-md border border-white/10 bg-[#0b0b0b] p-8 shadow-2xl"><div className="mb-6 flex h-16 w-16 items-center justify-center rounded-full border border-[#d71920]/40 bg-black"><LockKeyhole className="text-[#d71920]" size={28}/></div><div className="rock-title text-4xl">RETAGUARDA</div><p className="mt-2 text-sm text-white/50">Hey Roll Let’s Go — acesso exclusivo do proprietário.</p><label className="field-label mt-7">E-mail do proprietário</label><input className="field" value={email} onChange={(e) => setEmail(e.target.value)} type="email" autoComplete="username" required /><label className="field-label mt-4">Senha</label><input className="field" value={password} onChange={(e) => setPassword(e.target.value)} type="password" autoComplete="current-password" required />{error && <p className="mt-4 border border-[#d71920]/40 bg-[#d71920]/10 p-3 text-sm font-bold">{error}</p>}<button disabled={loading} className="mt-5 flex w-full items-center justify-center gap-2 bg-[#d71920] py-4 font-black uppercase disabled:opacity-50"><LogIn size={18}/>{loading ? 'VERIFICANDO...' : 'ENTRAR NA RETAGUARDA'}</button></form></main>;
 }
