@@ -26,6 +26,8 @@ body { margin: 0; background: #050505; color: #fff; font-family: Arial, Helvetic
 .site-header { box-shadow: 0 8px 30px rgba(0,0,0,.45); }
 .brand-logo-wrap { box-shadow: 0 0 0 1px rgba(255,255,255,.08); background:#000; }
 .brand-logo-wrap img { opacity:1; display:block; width:100%; height:100%; object-fit:contain; object-position:center; }
+/* Use the real uploaded logo PNG directly. This bypasses the old SVG wrapper and prevents blank/distorted rendering. */
+img[src="/hey-roll-logo.svg"] { content:url('/images/Logo%20Hamburgueria.png'); object-fit:contain; object-position:center; }
 .nav-link { position:relative; display:flex; align-items:center; height:88px; color:#fff; font-size:17px; font-weight:900; text-transform:uppercase; transition:.2s; }
 .nav-link:hover, .nav-link.active { color:#e11920; }
 .hero-rock { background:#050505; }
