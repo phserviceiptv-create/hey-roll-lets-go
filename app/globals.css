@@ -44,7 +44,6 @@ body { margin: 0; background: #050505; color: #fff; font-family: Arial, Helvetic
 .section-heading { display:flex; align-items:end; justify-content:space-between; gap:20px; margin-bottom:38px; border-bottom:1px solid rgba(255,255,255,.12); padding-bottom:18px; }
 .section-heading p, .quick-bar p { margin:0; color:#d71920; font-size:12px; font-weight:900; letter-spacing:.3em; }
 .section-heading h2 { margin-top:8px; font-size:58px; }
-.section-heading span { text-align:right; color:rgba(255,255,255,.5); font-size:12px; font-weight:900; line-height:1.25; }
 .quick-bar { margin-bottom:42px; border:1px solid rgba(215,25,32,.4); background:#0d0d0d; padding:18px; }
 .quick-bar h3 { margin-top:5px; font-size:26px; }
 .quick-products { display:flex; gap:8px; overflow-x:auto; margin-top:16px; padding-bottom:3px; }
@@ -54,55 +53,6 @@ body { margin: 0; background: #050505; color: #fff; font-family: Arial, Helvetic
 .product-card { overflow:hidden; border:1px solid rgba(255,255,255,.1); background:#111; transition:.25s; }
 .product-card:hover { transform:translateY(-4px); border-color:rgba(215,25,32,.7); box-shadow:0 15px 40px rgba(0,0,0,.4); }
 .product-badge { position:absolute; left:12px; top:12px; background:#d71920; padding:6px 9px; font-size:10px; font-weight:900; text-transform:uppercase; }
-
-/* Desktop: the approved 1536x1024 reference is the exact visual surface. */
-@media (min-width: 901px) {
-  body {
-    background-color:#050505;
-    background-image:url("https://raw.githubusercontent.com/phserviceiptv-create/hey-roll-lets-go/main/ChatGPT%20Image%202%20de%20set.%20de%202026%2C%2011_24_14.png");
-    background-position:top center;
-    background-repeat:no-repeat;
-    background-size:100vw auto;
-  }
-  .site-header {
-    min-height:121px;
-    height:121px;
-    background:transparent !important;
-    box-shadow:none;
-    border-color:transparent !important;
-  }
-  .site-header > div {
-    min-height:121px !important;
-    height:121px;
-    opacity:0;
-  }
-  .hero-rock {
-    height:850px;
-    min-height:850px;
-    background:transparent !important;
-    border:0;
-  }
-  .hero-rock .hero-paper,
-  .hero-rock .hero-splatter { display:none; }
-  .hero-rock > .relative.mx-auto.grid {
-    height:675px;
-    min-height:675px !important;
-    opacity:0;
-  }
-  .hero-rock > .relative.mx-auto.grid + .relative.mx-auto.grid {
-    height:175px;
-    opacity:0;
-  }
-  .star-strip {
-    height:53px;
-    min-height:53px;
-    padding:0;
-    border:0;
-    background:transparent;
-    color:transparent;
-    font-size:0;
-  }
-}
 
 @media (max-width: 900px) {
   .hero-logo-frame { width:min(80vw, 520px); }
