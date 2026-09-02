@@ -24,7 +24,7 @@ body { margin: 0; background: #050505; color: #fff; font-family: Arial, Helvetic
 .pulse-red { box-shadow: 0 0 0 0 rgba(215,25,32,.45); animation: pulse-red 2s infinite; }
 @keyframes pulse-red { 70% { box-shadow: 0 0 0 12px rgba(215,25,32,0); } 100% { box-shadow: 0 0 0 0 rgba(215,25,32,0); } }
 .site-header { box-shadow: 0 8px 30px rgba(0,0,0,.45); }
-.brand-logo-wrap { box-shadow: 0 0 0 1px rgba(255,255,255,.08); background-image:url('https://media.githubusercontent.com/media/phserviceiptv-create/hey-roll-lets-go/main/ChatGPT%20Image%202%20de%20set.%20de%202026%2C%2011_24_14.png'); background-repeat:no-repeat; background-size:307% auto; background-position:78% 54%; }
+.brand-logo-wrap { box-shadow: 0 0 0 1px rgba(255,255,255,.08); background-image:url('/images/ChatGPT%20Image%202%20de%20set.%20de%202026%2C%2011_24_14%20(1).png'); background-repeat:no-repeat; background-size:307% auto; background-position:78% 54%; }
 .brand-logo-wrap img { opacity:0; }
 .nav-link { position:relative; display:flex; align-items:center; height:88px; color:#fff; font-size:17px; font-weight:900; text-transform:uppercase; transition:.2s; }
 .nav-link:hover, .nav-link.active { color:#e11920; }
@@ -33,7 +33,7 @@ body { margin: 0; background: #050505; color: #fff; font-family: Arial, Helvetic
 .hero-splatter { opacity:.55; background-image: radial-gradient(circle at 4% 35%, transparent 0 48px, rgba(255,255,255,.11) 49px 50px, transparent 51px), radial-gradient(circle at 96% 45%, transparent 0 42px, rgba(255,255,255,.08) 43px 44px, transparent 45px); }
 .hero-title { text-shadow: 4px 5px 0 #080808; }
 .hero-title span { color:#e11920; }
-.hero-logo-frame { width:min(47vw, 620px); aspect-ratio:1/1; border-radius:50%; padding:8px; background:#111; box-shadow: 0 0 0 7px rgba(255,255,255,.06), 0 25px 70px rgba(0,0,0,.7); background-image:url('https://media.githubusercontent.com/media/phserviceiptv-create/hey-roll-lets-go/main/ChatGPT%20Image%202%20de%20set.%20de%202026%2C%2011_24_14.png'); background-repeat:no-repeat; background-size:245% auto; background-position:83% 54%; }
+.hero-logo-frame { width:min(47vw, 620px); aspect-ratio:1/1; border-radius:50%; padding:8px; background:#111; box-shadow: 0 0 0 7px rgba(255,255,255,.06), 0 25px 70px rgba(0,0,0,.7); background-image:url('/images/ChatGPT%20Image%202%20de%20set.%20de%202026%2C%2011_24_14%20(1).png'); background-repeat:no-repeat; background-size:245% auto; background-position:83% 54%; }
 .hero-logo-frame img { border-radius:50%; opacity:0; }
 .info-card { display:flex; min-height:135px; align-items:center; gap:22px; border:1px solid rgba(255,255,255,.13); background:rgba(4,4,4,.88); padding:24px; }
 .info-card > svg { flex:0 0 auto; color:#d71920; }
