@@ -29,6 +29,7 @@ export default function Storefront() {
   const [checkout, setCheckout] = useState<CheckoutData>(initialCheckout);
   const [sending, setSending] = useState(false);
   const [orderDone, setOrderDone] = useState(false);
+  const [selectedProduct, setSelectedProduct] = useState<Product | null>(null);
 
   useEffect(() => {
     let mounted = true;
@@ -122,7 +123,7 @@ export default function Storefront() {
 
       <section id="menu" className="mx-auto max-w-[1380px] px-5 py-16 lg:px-8">
         <div className="section-heading"><div><p>O PALCO ESTÁ ABERTO</p><h2 className="rock-title">CARDÁPIO</h2></div><span>DIARIAMENTE<br />A PARTIR DAS 18H</span></div>
-        {!loading && products.length > 0 && <div className="quick-bar"><div><p>ATENDIMENTO RÁPIDO</p><h3 className="rock-title">UM CLIQUE. UM HIT.</h3></div><div className="quick-products">{products.slice(0, 12).map((product) => <button key={product.product_id} onClick={() => add(product, false)}><Plus size={15} />{product.product_name}<b>{formatBRL(product.product_price)}</b></button>)}</div></div>}
+        {!loading && products.length > 0 && <div className="quick-bar"><div><p>ATENDIMENTO RÁPIDO</p><h3 className="rock-title">UM CLIQUE. UM HIT.</h3></div><div className="quick-products">{products.slice(0, 12).map((product) => <button key={product.product_id} onClick={() => { add(product, false); setSelectedProduct(product); }}><Plus size={15} />{product.product_name}<b>{formatBRL(product.product_price)}</b></button>)}</div></div>}
         {loading && <div className="grid gap-5 sm:grid-cols-2 lg:grid-cols-3">{[1,2,3].map((n) => <div key={n} className="h-72 animate-pulse border border-white/10 bg-white/5" />)}</div>}
         {!loading && error && <div className="border border-[#d71920]/50 bg-[#d71920]/10 p-5 font-bold">Não foi possível carregar o cardápio agora. Tente novamente em instantes.</div>}
         {!loading && !error && products.length === 0 && <div className="border-2 border-dashed border-white/15 px-6 py-20 text-center"><div className="rock-title text-4xl">O palco está sendo montado.</div><p className="mx-auto mt-3 max-w-md text-white/55">Cadastre os produtos no painel de configurações para que apareçam automaticamente aqui.</p></div>}
@@ -133,6 +134,58 @@ export default function Storefront() {
       <section id="sobre" className="mx-auto max-w-[1380px] px-5 py-16 lg:px-8"><div className="grid gap-8 md:grid-cols-2"><div><p className="text-xs font-black uppercase tracking-[.3em] text-[#d71920]">A nossa banda</p><h2 className="rock-title mt-3 text-5xl">SOBRE NÓS</h2></div><p className="text-lg leading-8 text-white/65">A Hey Roll Let’s Go nasceu para transformar hambúrguer artesanal em experiência. Sabor marcante, identidade Rock ’n’ Roll e atendimento direto para você pedir sem complicação.</p></div></section>
       <section id="contato" className="border-t border-white/10 bg-black px-5 py-14 lg:px-8"><div className="mx-auto flex max-w-[1380px] flex-col gap-5 md:flex-row md:items-center md:justify-between"><div><p className="text-xs font-black uppercase tracking-[.3em] text-[#d71920]">Contato</p><h2 className="rock-title mt-2 text-4xl">HEY HO, LET'S EAT!</h2><p className="mt-2 text-white/50">R. Miguel Gonçalves, 218 — Bela Vista, Fortaleza — CE</p></div><a href="https://wa.me/5585992443472" target="_blank" rel="noreferrer" className="inline-flex items-center justify-center bg-[#d71920] px-7 py-4 text-sm font-black uppercase transition hover:bg-white hover:text-black">Falar no WhatsApp</a></div></section>
       <footer className="border-t border-white/10 px-5 py-8 text-center text-xs uppercase tracking-[.2em] text-white/35">HEY ROLL LET’S GO • HAMBURGUERIA ARTESANAL</footer>
+      {selectedProduct && (
+  <div className="fixed inset-0 z-[55] flex items-center justify-center bg-black/80 p-4">
+    <div className="w-full max-w-md border border-white/10 bg-[#0b0b0b] p-6 shadow-2xl">
+      <div className="flex items-start justify-between gap-4">
+        <div>
+          <p className="text-xs font-black uppercase tracking-[.25em] text-[#d71920]">
+            SEU HIT FOI SELECIONADO
+          </p>
+          <h2 className="rock-title mt-2 text-3xl">
+            {selectedProduct.product_name}
+          </h2>
+        </div>
+
+        <button
+          onClick={() => setSelectedProduct(null)}
+          className="border border-white/10 p-2 text-white/60 hover:bg-white hover:text-black"
+          aria-label="Fechar"
+        >
+          <X size={20} />
+        </button>
+      </div>
+
+      <div className="mt-6 border-y border-white/10 py-5">
+        <div className="flex items-center justify-between">
+          <span className="text-white/50">Preço</span>
+          <strong className="text-2xl">
+            {formatBRL(selectedProduct.product_price)}
+          </strong>
+        </div>
+      </div>
+
+      <div className="mt-6 grid gap-3">
+        <button
+          onClick={() => {
+            setSelectedProduct(null);
+            setCheckoutOpen(true);
+          }}
+          className="w-full bg-[#d71920] px-5 py-4 font-black uppercase transition hover:bg-white hover:text-black"
+        >
+          Finalizar pedido
+        </button>
+
+        <button
+          onClick={() => setSelectedProduct(null)}
+          className="w-full border border-white/15 px-5 py-4 font-black uppercase transition hover:bg-white hover:text-black"
+        >
+          Continuar comprando
+        </button>
+      </div>
+    </div>
+  </div>
+)}
       {cartOpen && <div className="fixed inset-0 z-50 bg-black/75 p-4"><div className="ml-auto flex h-full w-full max-w-md flex-col border border-white/10 bg-[#0b0b0b] p-5"><div className="flex items-center justify-between"><h2 className="rock-title text-3xl">CARRINHO</h2><button onClick={() => setCartOpen(false)}><X /></button></div><div className="mt-6 flex-1 space-y-3 overflow-auto">{cart.length ? cart.map((item) => <div key={item.product_id} className="flex items-center justify-between border-b border-white/10 pb-4"><div><strong>{item.product_name}</strong><div className="mt-1 text-sm text-white/50">{formatBRL(item.product_price)}</div></div><div className="flex items-center gap-2"><button onClick={() => changeQty(item.product_id, -1)} className="border border-white/15 p-2"><Minus size={14} /></button><span>{item.quantity}</span><button onClick={() => changeQty(item.product_id, 1)} className="border border-white/15 p-2"><Plus size={14} /></button></div></div>) : <p className="text-white/50">Seu carrinho está vazio.</p>}</div><div className="border-t border-white/10 pt-5"><div className="flex justify-between text-lg font-black"><span>Total</span><span>{formatBRL(total)}</span></div><button disabled={!cart.length} onClick={() => { setCartOpen(false); setCheckoutOpen(true); }} className="mt-4 w-full bg-[#d71920] px-5 py-4 font-black uppercase disabled:opacity-40">Finalizar pedido</button></div></div></div>}
       {checkoutOpen && <div className="fixed inset-0 z-[60] overflow-auto bg-black/80 p-4"><div className="mx-auto max-w-2xl border border-white/10 bg-[#0b0b0b] p-6"><div className="flex items-center justify-between"><h2 className="rock-title text-3xl">FINALIZAR PEDIDO</h2><button onClick={() => setCheckoutOpen(false)}><X /></button></div><div className="mt-6 grid gap-4 sm:grid-cols-2">{([['customerName','Nome'],['customerPhone','WhatsApp'],['street','Rua'],['number','Número'],['neighborhood','Bairro'],['reference','Referência']] as const).map(([key,label]) => <label key={key}><span className="field-label">{label}</span><input className="field" value={checkout[key]} onChange={(e) => setCheckout({ ...checkout, [key]: e.target.value })} /></label>)}<label><span className="field-label">Pagamento</span><select className="field" value={checkout.paymentType} onChange={(e) => setCheckout({ ...checkout, paymentType: e.target.value as CheckoutData['paymentType'] })}><option value="pix">Pix</option><option value="credito">Cartão</option><option value="dinheiro">Dinheiro</option></select></label>{checkout.paymentType === 'dinheiro' && <label><span className="field-label">Troco para</span><input className="field" type="number" min="0" step="0.01" value={checkout.changeFor ?? ''} onChange={(e) => setCheckout({ ...checkout, changeFor: e.target.value ? Number(e.target.value) : null })} /></label>}</div>{error && <div className="mt-5 border border-[#d71920]/50 bg-[#d71920]/10 p-4 text-sm font-bold">{error}</div>}<button disabled={sending} onClick={() => void finishOrder()} className="mt-6 w-full bg-[#d71920] px-5 py-4 font-black uppercase disabled:opacity-50">{sending ? 'ENVIANDO...' : `ENVIAR PEDIDO • ${formatBRL(total)}`}</button></div></div>}
       {orderDone && <div className="fixed bottom-5 right-5 z-[70] flex items-center gap-3 border border-green-500/30 bg-[#0b0b0b] px-5 py-4 shadow-2xl"><Check className="text-green-400" /> Pedido registrado e enviado para o WhatsApp.<button onClick={() => setOrderDone(false)}><X size={16} /></button></div>}
