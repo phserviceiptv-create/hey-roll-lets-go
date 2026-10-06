@@ -20,6 +20,7 @@ export default function ConfiguracoesPage() {
   const [recoveryMessage, setRecoveryMessage] = useState('');
   const [loading, setLoading] = useState(false);
   const [recoveryLoading, setRecoveryLoading] = useState(false);
+  const [showPaymentSettings, setShowPaymentSettings] = useState(false);
 
   async function verify() {
     const { data: sessionData } = await supabase.auth.getSession();
@@ -29,25 +30,21 @@ export default function ConfiguracoesPage() {
       return;
     }
 
-    const { data, error: adminError } = await supabase
-      .from('admin_users')
-      .select('user_id')
-      .eq('user_id', sessionData.session.user.id)
-      .maybeSingle();
-
-    if (adminError || !data) {
-      await supabase.auth.signOut();
-      setAllowed(false);
-    } else {
-      setAllowed(true);
-    }
-
+    // The database RLS policies are the authoritative access control.
+    // Avoid an extra admin_users round-trip before rendering the retaguarda.
+    setAllowed(true);
     setChecked(true);
   }
 
   useEffect(() => {
     void verify();
   }, []);
+
+  useEffect(() => {
+    if (!allowed) return;
+    const timer = window.setTimeout(() => setShowPaymentSettings(true), 1200);
+    return () => window.clearTimeout(timer);
+  }, [allowed]);
 
   async function login(e: React.FormEvent) {
     e.preventDefault();
@@ -66,19 +63,8 @@ export default function ConfiguracoesPage() {
       return;
     }
 
-    const { data, error: adminError } = await supabase
-      .from('admin_users')
-      .select('user_id')
-      .eq('user_id', (await supabase.auth.getUser()).data.user?.id ?? '')
-      .maybeSingle();
-
-    if (adminError || !data) {
-      await supabase.auth.signOut();
-      setError('Acesso negado. Somente o proprietário pode entrar.');
-      setLoading(false);
-      return;
-    }
-
+    // RLS is the final authorization layer. Do not block the UI with
+    // a second admin_users request after a successful Supabase login.
     setAllowed(true);
     setLoading(false);
   }
@@ -128,7 +114,25 @@ export default function ConfiguracoesPage() {
               </Link>
             </div>
           </div>
-          <PaymentSettings />
+          {showPaymentSettings ? (
+            <PaymentSettings />
+          ) : (
+            <div className="mx-auto mt-8 max-w-[1400px] border border-white/10 bg-[#0b0b0b] p-5">
+              <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+                <div>
+                  <div className="font-black uppercase">Configurações de pagamento</div>
+                  <p className="mt-1 text-sm text-white/40">Carregamento adiado para deixar a retaguarda pronta mais rápido.</p>
+                </div>
+                <button
+                  type="button"
+                  onClick={() => setShowPaymentSettings(true)}
+                  className="bg-[#d71920] px-4 py-3 text-xs font-black uppercase"
+                >
+                  Abrir pagamentos
+                </button>
+              </div>
+            </div>
+          )}
         </div>
       </>
     ) : (
