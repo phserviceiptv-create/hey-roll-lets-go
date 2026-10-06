@@ -56,29 +56,40 @@ export default function Storefront() {
     return () => { mounted = false; };
   }, []);
 
-  async function loadPaymentMethods() {
-    if (paymentMethodsLoading || paymentMethods.length) return;
+  useEffect(() => {
+    if (!checkoutOpen || paymentMethods.length || paymentMethodsLoading) return;
+
+    let active = true;
     setPaymentMethodsLoading(true);
-    const { data, error: paymentError } = await supabase
+
+    void supabase
       .from('hey_roll_payment_methods')
       .select('code,name,description,pix_key,sort_order')
       .eq('is_active', true)
-      .order('sort_order');
+      .order('sort_order')
+      .then(({ data, error: paymentError }) => {
+        if (!active) return;
+        if (paymentError) {
+          setError('Não foi possível carregar as formas de pagamento. Tente novamente.');
+        } else {
+          const methods = (data ?? []) as PaymentMethod[];
+          setPaymentMethods(methods);
+          if (methods[0]) {
+            setCheckout((current) => ({
+              ...current,
+              paymentType: methods.some((method) => method.code === current.paymentType)
+                ? current.paymentType
+                : methods[0].code,
+            }));
+          }
+        }
+        setPaymentMethodsLoading(false);
+      });
 
-    if (paymentError) {
-      setError('Não foi possível carregar as formas de pagamento. Tente novamente.');
-    } else {
-      setPaymentMethods((data ?? []) as PaymentMethod[]);
-      if (data?.[0]) {
-        setCheckout((current) => ({ ...current, paymentType: current.paymentType && data.some((method) => method.code === current.paymentType) ? current.paymentType : data[0].code }));
-      }
-    }
-    setPaymentMethodsLoading(false);
-  }
-
-  useEffect(() => {
-    if (checkoutOpen) void loadPaymentMethods();
-  }, [checkoutOpen]);
+    return () => {
+      active = false;
+    };
+  }, [checkoutOpen, paymentMethods.length, paymentMethodsLoading]);
 
   const total = useMemo(() => cart.reduce((sum, item) => sum + item.product_price * item.quantity, 0), [cart]);
   const quantity = useMemo(() => cart.reduce((sum, item) => sum + item.quantity, 0), [cart]);
