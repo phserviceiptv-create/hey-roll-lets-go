@@ -8,6 +8,9 @@ import { formatBRL } from '@/lib/money';
 import { buildWhatsAppMessage, whatsappUrl } from '@/lib/whatsapp';
 import type { CartItem, CheckoutData, Product } from '@/types/store';
 
+const CATALOG_CACHE_KEY = 'hey-roll-catalog-v1';
+const CATALOG_CACHE_TTL = 60_000;
+
 const categoryLabels: Record<string, string> = {
   'Discos de Ouro': 'Discos de Ouro',
   'Abertura do Show': 'Abertura do Show',
@@ -44,14 +47,38 @@ export default function Storefront() {
 
   useEffect(() => {
     let mounted = true;
+
+    try {
+      const cached = window.localStorage.getItem(CATALOG_CACHE_KEY);
+      if (cached) {
+        const parsed = JSON.parse(cached) as { at?: number; products?: Product[] };
+        if (parsed.at && Array.isArray(parsed.products) && Date.now() - parsed.at < CATALOG_CACHE_TTL) {
+          setProducts(parsed.products);
+          setLoading(false);
+        }
+      }
+    } catch {
+      // Ignore an invalid local cache and fetch fresh data below.
+    }
+
     async function load() {
-      setLoading(true);
       const { data, error: queryError } = await supabase.rpc('get_hey_roll_catalog');
       if (!mounted) return;
-      if (queryError) setError(queryError.message);
-      else setProducts((data ?? []) as Product[]);
+
+      if (queryError) {
+        if (!products.length) setError(queryError.message);
+      } else {
+        const freshProducts = (data ?? []) as Product[];
+        setProducts(freshProducts);
+        try {
+          window.localStorage.setItem(CATALOG_CACHE_KEY, JSON.stringify({ at: Date.now(), products: freshProducts }));
+        } catch {
+          // Storage can be unavailable in private/restricted browser modes.
+        }
+      }
       setLoading(false);
     }
+
     void load();
     return () => { mounted = false; };
   }, []);
