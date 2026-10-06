@@ -1,6 +1,7 @@
 'use client';
 
 import { useEffect, useMemo, useState } from 'react';
+import Image from 'next/image';
 import { ArrowRight, Check, Clock3, MapPin, Minus, Plus, ShoppingCart, Star, Truck, X } from 'lucide-react';
 import { supabase } from '@/lib/supabase';
 import { formatBRL } from '@/lib/money';
@@ -19,6 +20,14 @@ const initialCheckout: CheckoutData = {
   customerName: '', customerPhone: '', street: '', number: '', neighborhood: '', reference: '', paymentType: 'pix', changeFor: null,
 };
 
+type PaymentMethod = {
+  code: CheckoutData['paymentType'];
+  name: string;
+  description: string | null;
+  pix_key: string | null;
+  sort_order: number;
+};
+
 export default function Storefront() {
   const [products, setProducts] = useState<Product[]>([]);
   const [loading, setLoading] = useState(true);
@@ -30,6 +39,8 @@ export default function Storefront() {
   const [sending, setSending] = useState(false);
   const [orderDone, setOrderDone] = useState(false);
   const [selectedProduct, setSelectedProduct] = useState<Product | null>(null);
+  const [paymentMethods, setPaymentMethods] = useState<PaymentMethod[]>([]);
+  const [paymentMethodsLoading, setPaymentMethodsLoading] = useState(false);
 
   useEffect(() => {
     let mounted = true;
@@ -44,6 +55,30 @@ export default function Storefront() {
     void load();
     return () => { mounted = false; };
   }, []);
+
+  async function loadPaymentMethods() {
+    if (paymentMethodsLoading || paymentMethods.length) return;
+    setPaymentMethodsLoading(true);
+    const { data, error: paymentError } = await supabase
+      .from('hey_roll_payment_methods')
+      .select('code,name,description,pix_key,sort_order')
+      .eq('is_active', true)
+      .order('sort_order');
+
+    if (paymentError) {
+      setError('Não foi possível carregar as formas de pagamento. Tente novamente.');
+    } else {
+      setPaymentMethods((data ?? []) as PaymentMethod[]);
+      if (data?.[0]) {
+        setCheckout((current) => ({ ...current, paymentType: current.paymentType && data.some((method) => method.code === current.paymentType) ? current.paymentType : data[0].code }));
+      }
+    }
+    setPaymentMethodsLoading(false);
+  }
+
+  useEffect(() => {
+    if (checkoutOpen) void loadPaymentMethods();
+  }, [checkoutOpen]);
 
   const total = useMemo(() => cart.reduce((sum, item) => sum + item.product_price * item.quantity, 0), [cart]);
   const quantity = useMemo(() => cart.reduce((sum, item) => sum + item.quantity, 0), [cart]);
@@ -92,7 +127,7 @@ export default function Storefront() {
       <header className="site-header sticky top-0 z-40 border-b border-white/10 bg-black/95 backdrop-blur-xl">
         <div className="mx-auto flex min-h-[88px] max-w-[1440px] items-center gap-5 px-5 lg:px-8">
           <a href="#top" className="brand flex min-w-0 items-center gap-4" aria-label="Hey Roll Let's Go">
-            <div className="brand-logo-wrap h-[74px] w-[74px] shrink-0 overflow-hidden rounded-full bg-white"><img src="/hey-roll-logo.svg" alt="Hey Roll Let's Go Hamburgueria Artesanal" className="h-full w-full object-contain" /></div>
+            <div className="brand-logo-wrap relative h-[74px] w-[74px] shrink-0 overflow-hidden rounded-full bg-white"><Image src="/images/Logo Hamburgueria.png" alt="Hey Roll Let's Go Hamburgueria Artesanal" fill sizes="74px" className="object-contain" /></div>
             <div className="hidden leading-none sm:block"><div className="rock-title text-[27px] text-white">HEY ROLL</div><div className="rock-title mt-1 text-[25px] text-[#d71920]">LET’S GO</div></div>
           </a>
           <nav className="ml-auto hidden items-center gap-8 lg:flex" aria-label="Navegação principal">
@@ -111,7 +146,7 @@ export default function Storefront() {
             <p className="mt-7 max-w-[660px] text-xl font-medium text-white sm:text-2xl">Serviços hambúrgueres 🍔 artesanais na parrila Uruguai!</p>
             <button onClick={scrollToMenu} className="mt-8 inline-flex items-center gap-5 rounded-[4px] bg-[#e11920] px-7 py-4 text-lg font-black uppercase shadow-[0_8px_28px_rgba(225,25,32,.2)] transition hover:scale-[1.02] hover:bg-white hover:text-black">Abrir o cardápio <ArrowRight size={26} /></button>
           </div>
-          <div className="relative z-10 flex justify-center lg:justify-end"><div className="hero-logo-frame"><img src="/hey-roll-logo.svg" alt="Logo oficial Hey Roll Let's Go Hamburgueria Artesanal" className="h-full w-full object-contain" /></div></div>
+          <div className="relative z-10 flex justify-center lg:justify-end"><div className="hero-logo-frame relative"><Image src="/images/Logo Hamburgueria.png" alt="Logo oficial Hey Roll Let's Go Hamburgueria Artesanal" fill priority sizes="(max-width: 900px) 88vw, 560px" className="object-contain" /></div></div>
         </div>
         <div className="relative mx-auto grid max-w-[1380px] gap-4 px-5 pb-8 sm:grid-cols-3 lg:px-8">
           <div className="info-card"><Clock3 size={50} strokeWidth={2} /><div><h3>HORÁRIO DE FUNCIONAMENTO</h3><p>Terça a Domingo: 18:00 às 00:00</p><strong>Segunda: Fechado</strong></div></div>
@@ -127,7 +162,7 @@ export default function Storefront() {
         {loading && <div className="grid gap-5 sm:grid-cols-2 lg:grid-cols-3">{[1,2,3].map((n) => <div key={n} className="h-72 animate-pulse border border-white/10 bg-white/5" />)}</div>}
         {!loading && error && <div className="border border-[#d71920]/50 bg-[#d71920]/10 p-5 font-bold">Não foi possível carregar o cardápio agora. Tente novamente em instantes.</div>}
         {!loading && !error && products.length === 0 && <div className="border-2 border-dashed border-white/15 px-6 py-20 text-center"><div className="rock-title text-4xl">O palco está sendo montado.</div><p className="mx-auto mt-3 max-w-md text-white/55">Cadastre os produtos no painel de configurações para que apareçam automaticamente aqui.</p></div>}
-        <div className="space-y-16">{Object.entries(grouped).map(([category, items]) => <section key={category}><div className="mb-6 flex items-center gap-4"><h3 className="rock-title text-3xl sm:text-4xl">{categoryLabels[category] ?? category}</h3><div className="h-[2px] flex-1 bg-[#d71920]" /></div><div className="grid gap-5 sm:grid-cols-2 lg:grid-cols-3">{items.map((product) => <article key={product.product_id} className="product-card group"><div className="relative aspect-[4/3] overflow-hidden bg-black">{product.product_image_url ? <img src={product.product_image_url} alt={product.product_name} className="h-full w-full object-cover transition duration-500 group-hover:scale-105" /> : <div className="flex h-full items-center justify-center"><span className="rock-title text-5xl text-white/10">HRLG</span></div>}<div className="product-badge">★ {product.product_badge ?? 'Rock Hit'}</div></div><div className="p-5"><h4 className="rock-title text-2xl">{product.product_name}</h4><p className="mt-2 min-h-10 text-sm leading-6 text-white/55">{product.product_description ?? 'Preparado artesanalmente para o seu próximo show.'}</p><div className="mt-5 flex items-center justify-between gap-3"><strong className="text-xl">{formatBRL(product.product_price)}</strong><button onClick={() => setSelectedProduct(product)} className="flex items-center gap-2 bg-[#d71920] px-4 py-3 text-xs font-black uppercase transition hover:bg-white hover:text-black"><Plus size={16} /> Adicionar</button></div></div></article>)}</div></section>)}</div>
+        <div className="space-y-16">{Object.entries(grouped).map(([category, items]) => <section key={category}><div className="mb-6 flex items-center gap-4"><h3 className="rock-title text-3xl sm:text-4xl">{categoryLabels[category] ?? category}</h3><div className="h-[2px] flex-1 bg-[#d71920]" /></div><div className="grid gap-5 sm:grid-cols-2 lg:grid-cols-3">{items.map((product) => <article key={product.product_id} className="product-card group"><div className="relative aspect-[4/3] overflow-hidden bg-black">{product.product_image_url ? <Image src={product.product_image_url} alt={product.product_name} fill sizes="(max-width: 640px) 100vw, (max-width: 1024px) 50vw, 33vw" className="object-cover transition duration-500 group-hover:scale-105" /> : <div className="flex h-full items-center justify-center"><span className="rock-title text-5xl text-white/10">HRLG</span></div>}<div className="product-badge">★ {product.product_badge ?? 'Rock Hit'}</div></div><div className="p-5"><h4 className="rock-title text-2xl">{product.product_name}</h4><p className="mt-2 min-h-10 text-sm leading-6 text-white/55">{product.product_description ?? 'Preparado artesanalmente para o seu próximo show.'}</p><div className="mt-5 flex items-center justify-between gap-3"><strong className="text-xl">{formatBRL(product.product_price)}</strong><button onClick={() => setSelectedProduct(product)} className="flex items-center gap-2 bg-[#d71920] px-4 py-3 text-xs font-black uppercase transition hover:bg-white hover:text-black"><Plus size={16} /> Adicionar</button></div></div></article>)}</div></section>)}</div>
       </section>
 
       <section id="combos" className="border-y border-[#d71920]/30 bg-[#0a0a0a] px-5 py-16 lg:px-8"><div className="mx-auto max-w-[1380px]"><div className="section-heading"><div><p>GRANDES HITS</p><h2 className="rock-title">COMBOS</h2></div></div><p className="max-w-2xl text-lg text-white/60">Monte seu show completo com os produtos cadastrados na categoria de combos.</p><button onClick={scrollToMenu} className="mt-6 inline-flex items-center gap-3 bg-[#d71920] px-6 py-4 text-sm font-black uppercase">Ver combos no cardápio <ArrowRight size={18} /></button></div></section>
@@ -174,7 +209,7 @@ export default function Storefront() {
 
       {cartOpen && <div className="fixed inset-0 z-50 bg-black/75 p-4"><div className="ml-auto flex h-full w-full max-w-md flex-col border border-white/10 bg-[#0b0b0b] p-5"><div className="flex items-center justify-between"><h2 className="rock-title text-3xl">CARRINHO</h2><button onClick={() => setCartOpen(false)}><X /></button></div><div className="mt-6 flex-1 space-y-3 overflow-auto">{cart.length ? cart.map((item) => <div key={item.product_id} className="flex items-center justify-between border-b border-white/10 pb-4"><div><strong>{item.product_name}</strong><div className="mt-1 text-sm text-white/50">{formatBRL(item.product_price)}</div></div><div className="flex items-center gap-2"><button onClick={() => changeQty(item.product_id, -1)} className="border border-white/15 p-2"><Minus size={14} /></button><span>{item.quantity}</span><button onClick={() => changeQty(item.product_id, 1)} className="border border-white/15 p-2"><Plus size={14} /></button></div></div>) : <p className="text-white/50">Seu carrinho está vazio.</p>}</div><div className="border-t border-white/10 pt-5"><div className="flex justify-between text-lg font-black"><span>Total</span><span>{formatBRL(total)}</span></div><button onClick={() => setCartOpen(false)} className="mt-4 w-full border border-white/15 px-5 py-4 font-black uppercase transition hover:bg-white hover:text-black">Voltar ao cardápio</button></div></div></div>}
 
-      {checkoutOpen && <div className="fixed inset-0 z-[60] overflow-auto bg-black/80 p-4"><div className="mx-auto max-w-2xl border border-white/10 bg-[#0b0b0b] p-6"><div className="flex items-center justify-between"><h2 className="rock-title text-3xl">FINALIZAR PEDIDO</h2><button onClick={() => setCheckoutOpen(false)}><X /></button></div><div className="mt-6 grid gap-4 sm:grid-cols-2">{([['customerName','Nome'],['customerPhone','WhatsApp'],['street','Rua'],['number','Número'],['neighborhood','Bairro'],['reference','Referência']] as const).map(([key,label]) => <label key={key}><span className="field-label">{label}</span><input className="field" value={checkout[key]} onChange={(e) => setCheckout({ ...checkout, [key]: e.target.value })} /></label>)}<label><span className="field-label">Pagamento</span><select className="field" value={checkout.paymentType} onChange={(e) => setCheckout({ ...checkout, paymentType: e.target.value as CheckoutData['paymentType'] })}><option value="pix">Pix</option><option value="credito">Cartão</option><option value="dinheiro">Dinheiro</option></select></label>{checkout.paymentType === 'dinheiro' && <label><span className="field-label">Troco para</span><input className="field" type="number" min="0" step="0.01" value={checkout.changeFor ?? ''} onChange={(e) => setCheckout({ ...checkout, changeFor: e.target.value ? Number(e.target.value) : null })} /></label>}</div>{error && <div className="mt-5 border border-[#d71920]/50 bg-[#d71920]/10 p-4 text-sm font-bold">{error}</div>}<button disabled={sending} onClick={() => void finishOrder()} className="mt-6 w-full bg-[#d71920] px-5 py-4 font-black uppercase disabled:opacity-50">{sending ? 'ENVIANDO...' : `ENVIAR PEDIDO • ${formatBRL(total)}`}</button></div></div>}
+      {checkoutOpen && <div className="fixed inset-0 z-[60] overflow-auto bg-black/80 p-4"><div className="mx-auto max-w-2xl border border-white/10 bg-[#0b0b0b] p-6"><div className="flex items-center justify-between"><h2 className="rock-title text-3xl">FINALIZAR PEDIDO</h2><button onClick={() => setCheckoutOpen(false)}><X /></button></div><div className="mt-6 grid gap-4 sm:grid-cols-2">{([['customerName','Nome'],['customerPhone','WhatsApp'],['street','Rua'],['number','Número'],['neighborhood','Bairro'],['reference','Referência']] as const).map(([key,label]) => <label key={key}><span className="field-label">{label}</span><input className="field" value={checkout[key]} onChange={(e) => setCheckout({ ...checkout, [key]: e.target.value })} /></label>)}<label><span className="field-label">Pagamento</span><select className="field" value={checkout.paymentType} disabled={paymentMethodsLoading || !paymentMethods.length} onChange={(e) => setCheckout({ ...checkout, paymentType: e.target.value as CheckoutData['paymentType'] })}>{paymentMethodsLoading ? <option value="">Carregando...</option> : paymentMethods.length ? paymentMethods.map((method) => <option key={method.code} value={method.code}>{method.name}</option>) : <option value="">Nenhuma forma disponível</option>}</select>{paymentMethods.find((method) => method.code === checkout.paymentType)?.description && <span className="mt-1 block text-xs text-white/35">{paymentMethods.find((method) => method.code === checkout.paymentType)?.description}</span>}{checkout.paymentType === 'pix' && paymentMethods.find((method) => method.code === 'pix')?.pix_key && <span className="mt-1 block text-xs font-bold text-white/55">Chave PIX: {paymentMethods.find((method) => method.code === 'pix')?.pix_key}</span>}</label>{checkout.paymentType === 'dinheiro' && <label><span className="field-label">Troco para</span><input className="field" type="number" min="0" step="0.01" value={checkout.changeFor ?? ''} onChange={(e) => setCheckout({ ...checkout, changeFor: e.target.value ? Number(e.target.value) : null })} /></label>}</div>{error && <div className="mt-5 border border-[#d71920]/50 bg-[#d71920]/10 p-4 text-sm font-bold">{error}</div>}<button disabled={sending} onClick={() => void finishOrder()} className="mt-6 w-full bg-[#d71920] px-5 py-4 font-black uppercase disabled:opacity-50">{sending ? 'ENVIANDO...' : `ENVIAR PEDIDO • ${formatBRL(total)}`}</button></div></div>}
       {orderDone && <div className="fixed bottom-5 right-5 z-[70] flex items-center gap-3 border border-green-500/30 bg-[#0b0b0b] px-5 py-4 shadow-2xl"><Check className="text-green-400" /> Pedido registrado e enviado para o WhatsApp.<button onClick={() => setOrderDone(false)}><X size={16} /></button></div>}
     </main>
   );
