@@ -3,8 +3,10 @@
 import { useEffect, useState } from 'react';
 import { BarChart3, KeyRound, LogIn, LockKeyhole } from 'lucide-react';
 import Link from 'next/link';
-import AdminPanel from '@/components/admin-panel';
-import PaymentSettings from '@/components/payment-settings';
+import dynamic from 'next/dynamic';
+
+const AdminPanel = dynamic(() => import('@/components/admin-panel'), { loading: () => <div className="min-h-[420px] bg-[#050505] p-8 text-white/40">Carregando painel...</div> });
+const PaymentSettings = dynamic(() => import('@/components/payment-settings'), { loading: () => <div className="mx-auto mt-8 max-w-[1400px] bg-[#0b0b0b] p-5 text-white/40">Carregando pagamentos...</div> });
 import { supabase } from '@/lib/supabase';
 
 const SITE_URL = 'https://hey-roll-lets-go-test.vercel.app';
