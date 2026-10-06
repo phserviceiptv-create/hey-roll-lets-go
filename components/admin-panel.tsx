@@ -7,6 +7,7 @@ import { formatBRL } from '@/lib/money';
 import type { AdminProduct, Category } from '@/types/admin';
 
 const emptyProduct: Partial<AdminProduct> = { name: '', slug: '', description: '', price: 0, image_url: '', badge: 'Rock Hit', sort_order: 0, is_active: true };
+const ADMIN_CACHE_KEY = 'hey-roll-admin-catalog-v1';
 
 export default function AdminPanel() {
   const [message, setMessage] = useState('');
@@ -16,21 +17,38 @@ export default function AdminPanel() {
   const [editing, setEditing] = useState<Partial<AdminProduct> | null>(null);
   const [loading, setLoading] = useState(false);
 
-  async function load() {
-    setLoading(true);
+  async function load(options?: { background?: boolean }) {
+    if (!options?.background) setLoading(true);
     const [{ data: cats, error: catError }, { data: prods, error: prodError }] = await Promise.all([
       supabase.from('categories').select('id,name,slug,sort_order,is_active').order('sort_order'),
       supabase.from('products').select('id,category_id,name,slug,description,price,image_url,badge,sort_order,is_active,created_at,updated_at').order('sort_order'),
     ]);
-    setCategories((cats ?? []) as Category[]);
-    setProducts((prods ?? []) as AdminProduct[]);
-    if (catError || prodError) setMessage(catError?.message ?? prodError?.message ?? 'Não foi possível carregar os dados.');
+    if (catError || prodError) {
+      if (!categories.length && !products.length) setMessage(catError?.message ?? prodError?.message ?? 'Não foi possível carregar os dados.');
+      if (!options?.background) setLoading(false);
+      return;
+    }
+    const nextCategories = (cats ?? []) as Category[];
+    const nextProducts = (prods ?? []) as AdminProduct[];
+    setCategories(nextCategories);
+    setProducts(nextProducts);
+    try { localStorage.setItem(ADMIN_CACHE_KEY, JSON.stringify({ categories: nextCategories, products: nextProducts, savedAt: Date.now() })); } catch {}
     setLoading(false);
   }
 
-  // Parent route already validates the authenticated admin before mounting this panel.
-  // Load only the data needed by the panel to avoid duplicate auth/network work.
-  useEffect(() => { void load(); }, []);
+  // Hydrate immediately from local cache, then refresh in the background.
+  useEffect(() => {
+    try {
+      const cached = localStorage.getItem(ADMIN_CACHE_KEY);
+      if (cached) {
+        const parsed = JSON.parse(cached);
+        setCategories(parsed.categories ?? []);
+        setProducts(parsed.products ?? []);
+        setLoading(false);
+      }
+    } catch {}
+    void load({ background: true });
+  }, []);
   const categoryMap = useMemo(() => new Map(categories.map((c) => [c.id, c.name])), [categories]);
 
   async function logout() {
