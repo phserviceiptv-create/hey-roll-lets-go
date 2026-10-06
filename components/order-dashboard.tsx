@@ -83,8 +83,8 @@ export default function OrderDashboard() {
     setLoading(true);
     setMessage('');
     const [{ data: orderData, error: orderError }, { data: itemData, error: itemError }] = await Promise.all([
-      supabase.from('orders').select('*').order('created_at', { ascending: false }),
-      supabase.from('order_items').select('*').order('created_at', { ascending: true }),
+      supabase.from('orders').select('id,order_number,customer_name,customer_phone,delivery_street,delivery_number,delivery_neighborhood,delivery_reference,payment_method,change_for,subtotal,delivery_fee,total,status,whatsapp_sent,created_at,updated_at').order('created_at', { ascending: false }),
+      supabase.from('order_items').select('id,order_id,product_name,unit_price,quantity,item_total').order('created_at', { ascending: true }),
     ]);
     if (orderError || itemError) setMessage(orderError?.message ?? itemError?.message ?? 'Não foi possível carregar os pedidos.');
     setOrders((orderData ?? []) as Order[]);
@@ -94,17 +94,47 @@ export default function OrderDashboard() {
 
   useEffect(() => {
     void load();
+
     const channel = supabase
       .channel('hey-roll-orders-dashboard')
-      .on('postgres_changes', { event: '*', schema: 'public', table: 'orders' }, () => { void load(); })
-      .on('postgres_changes', { event: '*', schema: 'public', table: 'order_items' }, () => { void load(); })
+      .on('postgres_changes', { event: 'INSERT', schema: 'public', table: 'orders' }, ({ new: row }) => {
+        setOrders((current) => [row as Order, ...current]);
+      })
+      .on('postgres_changes', { event: 'UPDATE', schema: 'public', table: 'orders' }, ({ new: row }) => {
+        setOrders((current) => current.map((order) => order.id === (row as Order).id ? row as Order : order));
+      })
+      .on('postgres_changes', { event: 'DELETE', schema: 'public', table: 'orders' }, ({ old: row }) => {
+        setOrders((current) => current.filter((order) => order.id !== (row as Order).id));
+        setItems((current) => current.filter((item) => item.order_id !== (row as Order).id));
+        setSelected((current) => current?.id === (row as Order).id ? null : current);
+      })
+      .on('postgres_changes', { event: 'INSERT', schema: 'public', table: 'order_items' }, ({ new: row }) => {
+        setItems((current) => current.some((item) => item.id === (row as OrderItem).id) ? current : [...current, row as OrderItem]);
+      })
+      .on('postgres_changes', { event: 'UPDATE', schema: 'public', table: 'order_items' }, ({ new: row }) => {
+        setItems((current) => current.map((item) => item.id === (row as OrderItem).id ? row as OrderItem : item));
+      })
+      .on('postgres_changes', { event: 'DELETE', schema: 'public', table: 'order_items' }, ({ old: row }) => {
+        setItems((current) => current.filter((item) => item.id !== (row as OrderItem).id));
+      })
       .subscribe();
+
     return () => { void supabase.removeChannel(channel); };
   }, []);
 
   const counts = useMemo(() => statuses.reduce<Record<string, number>>((acc, status) => { acc[status.key] = orders.filter((order) => order.status === status.key).length; return acc; }, {}), [orders]);
   const todayTotal = useMemo(() => orders.filter((order) => new Date(order.created_at).toDateString() === new Date().toDateString() && order.status !== 'cancelado').reduce((sum, order) => sum + Number(order.total), 0), [orders]);
   const pending = useMemo(() => orders.filter((order) => ['novo', 'confirmado', 'preparando', 'saiu_para_entrega'].includes(order.status)).length, [orders]);
+
+  const itemsByOrder = useMemo(() => {
+    const map = new Map<string, OrderItem[]>();
+    for (const item of items) {
+      const list = map.get(item.order_id);
+      if (list) list.push(item);
+      else map.set(item.order_id, [item]);
+    }
+    return map;
+  }, [items]);
 
   const visibleOrders = useMemo(() => orders.filter((order) => {
     const matchesFilter = filter === 'todos' || order.status === filter;
@@ -125,7 +155,7 @@ export default function OrderDashboard() {
     window.setTimeout(() => window.print(), 150);
   }
 
-  const selectedItems = selected ? items.filter((item) => item.order_id === selected.id) : [];
+  const selectedItems = selected ? (itemsByOrder.get(selected.id) ?? []) : [];
 
   return (
     <section className="mx-auto max-w-[1400px] px-5 py-8 lg:px-8">
@@ -150,7 +180,7 @@ export default function OrderDashboard() {
       {loading ? <div className="mt-6 animate-pulse border border-white/10 bg-[#0b0b0b] p-10 text-center text-white/40">Carregando pedidos...</div> : visibleOrders.length === 0 ? <div className="mt-6 border-2 border-dashed border-white/10 p-14 text-center"><Clock3 className="mx-auto text-white/20" size={38}/><p className="rock-title mt-4 text-2xl">Nenhum pedido encontrado</p><p className="mt-2 text-sm text-white/40">Os novos pedidos do cardápio aparecerão aqui automaticamente.</p></div> : (
         <div className="mt-6 grid gap-4 xl:grid-cols-2">
           {visibleOrders.map((order) => {
-            const orderItems = items.filter((item) => item.order_id === order.id);
+            const orderItems = itemsByOrder.get(order.id) ?? [];
             const next = nextStatus[order.status];
             return <article key={order.id} className="border border-white/10 bg-[#0b0b0b] p-5 shadow-[0_8px_30px_rgba(0,0,0,.2)]">
               <div className="flex flex-wrap items-start justify-between gap-3">
