@@ -3,7 +3,9 @@
 import { useEffect, useState } from 'react';
 import { ArrowLeft, LockKeyhole } from 'lucide-react';
 import Link from 'next/link';
-import OrderDashboard from '@/components/order-dashboard';
+import dynamic from 'next/dynamic';
+
+const OrderDashboard = dynamic(() => import('@/components/order-dashboard'), { loading: () => <div className="min-h-[520px] bg-[#050505] p-8 text-white/40">Carregando pedidos...</div> });
 import { supabase } from '@/lib/supabase';
 
 export default function PedidosDashboardPage() {
