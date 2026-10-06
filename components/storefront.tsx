@@ -47,6 +47,7 @@ export default function Storefront() {
 
   useEffect(() => {
     let mounted = true;
+    let hasCachedProducts = false;
 
     try {
       const cached = window.localStorage.getItem(CATALOG_CACHE_KEY);
@@ -54,6 +55,7 @@ export default function Storefront() {
         const parsed = JSON.parse(cached) as { at?: number; products?: Product[] };
         if (parsed.at && Array.isArray(parsed.products) && Date.now() - parsed.at < CATALOG_CACHE_TTL) {
           setProducts(parsed.products);
+          hasCachedProducts = true;
           setLoading(false);
         }
       }
@@ -66,7 +68,7 @@ export default function Storefront() {
       if (!mounted) return;
 
       if (queryError) {
-        if (!products.length) setError(queryError.message);
+        if (!hasCachedProducts) setError(queryError.message);
       } else {
         const freshProducts = (data ?? []) as Product[];
         setProducts(freshProducts);
