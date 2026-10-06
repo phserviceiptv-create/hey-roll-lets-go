@@ -22,22 +22,28 @@ export default function ConfiguracoesPage() {
   const [recoveryLoading, setRecoveryLoading] = useState(false);
   const [showPaymentSettings, setShowPaymentSettings] = useState(false);
 
-  async function verify() {
-    const { data: sessionData } = await supabase.auth.getSession();
-    if (!sessionData.session) {
-      setAllowed(false);
-      setChecked(true);
-      return;
-    }
-
-    // The database RLS policies are the authoritative access control.
-    // Avoid an extra admin_users round-trip before rendering the retaguarda.
-    setAllowed(true);
-    setChecked(true);
-  }
-
   useEffect(() => {
-    void verify();
+    let active = true;
+    const finish = (session: unknown) => {
+      if (!active) return;
+      setAllowed(Boolean(session));
+      setChecked(true);
+    };
+
+    // Session is persisted locally; do not let a slow auth service block the page.
+    void Promise.race([
+      supabase.auth.getSession().then(({ data }) => finish(data.session)),
+      new Promise((resolve) => window.setTimeout(() => resolve(null), 900)),
+    ]);
+
+    const { data: listener } = supabase.auth.onAuthStateChange((_event, session) => {
+      finish(session);
+    });
+
+    return () => {
+      active = false;
+      listener.subscription.unsubscribe();
+    };
   }, []);
 
   useEffect(() => {
