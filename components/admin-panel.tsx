@@ -1,6 +1,6 @@
 'use client';
 
-import { useMemo, useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import { ImagePlus, LogOut, Pencil, Plus, RefreshCw, Save, Trash2, X } from 'lucide-react';
 import { supabase } from '@/lib/supabase';
 import { formatBRL } from '@/lib/money';
@@ -30,7 +30,7 @@ export default function AdminPanel() {
 
   // Parent route already validates the authenticated admin before mounting this panel.
   // Load only the data needed by the panel to avoid duplicate auth/network work.
-  useMemo(() => { void load(); }, []);
+  useEffect(() => { void load(); }, []);
   const categoryMap = useMemo(() => new Map(categories.map((c) => [c.id, c.name])), [categories]);
 
   async function logout() {
